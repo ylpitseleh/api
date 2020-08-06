@@ -1,5 +1,6 @@
 package com.rest.api.controller.v1;
 
+import com.rest.api.advice.exception.CUserNotFoundException;
 import com.rest.api.entity.User;
 import com.rest.api.model.response.CommonResult;
 import com.rest.api.model.response.ListResult;
@@ -16,7 +17,7 @@ import java.util.List;
 
 /**
  * 리소스의 사용 목적에 따라 GetMapping, PostMapping, PutMapping, DeleteMapping 을 사용.
- * 결과 데이터의 형태에 따라 단일건 처리는 getBasicResult()를,  다중건 처리는 getListResult()를,
+ * 결과 데이터의 형태에 따라 단일건 처리는 getSingleResult()를,  다중건 처리는 getListResult()를,
  * api 처리 성공 결과만 필요한 경우 getSuccessResult()를 사용.
  */
 // @RequiredArgsConstructor 사용하지 않고 선언된 객체에 @Autowired 해도 됨.
@@ -36,18 +37,20 @@ public class UserController {
     @ApiOperation(value = "회원 리스트 조회", notes = "모든 회원을 조회한다")
     @GetMapping(value = "/users")
     public ListResult<User> findAllUser() {
-        // JPA를 사용하면 기본으로 CRUD에 대해서는 별다른 설정없이 쿼리를 질의할 수 있도록 지원한다.
-        // return userJpaRepo.findAll();
-        // findAll()은 select msrl, name, uid from user; 쿼리를 내부적으로 실행시켜준다.
-        // 결과데이터가 여러건인경우 getListResult를 이용해서 결과를 출력한다.
+        /*
+        JPA를 사용하면 기본으로 CRUD에 대해서는 별다른 설정없이 쿼리를 질의할 수 있도록 지원한다. return userJpaRepo.findAll();
+        findAll()은 select msrl, name, uid from user; 쿼리를 내부적으로 실행시켜준다.
+        결과데이터가 여러건인경우 getListResult를 이용해서 결과를 출력한다.
+        */
         return responseService.getListResult(userJpaRepo.findAll());
     }
 
     @ApiOperation(value = "회원 단건 조회", notes = "userId로 회원을 조회한다")
     @GetMapping(value = "/user/{msrl}")
-    public SingleResult<User> findUserById(@ApiParam(value = "회원ID", required = true) @PathVariable long msrl) {
-        // 결과데이터가 단일건인경우 getBasicResult를 이용해서 결과를 출력한다.
-        return responseService.getSingleResult(userJpaRepo.findById(msrl).orElse(null));
+    public SingleResult<User> findUserById(@ApiParam(value = "회원ID", required = true) @PathVariable long msrl,
+                                           @ApiParam(value = "언어", defaultValue = "ko") @RequestParam String lang) {
+        // 결과데이터가 단일건인경우 getSingleResult를 이용해서 결과를 출력한다.
+        return responseService.getSingleResult(userJpaRepo.findById(msrl).orElseThrow(CUserNotFoundException::new));
     }
 
     /**
